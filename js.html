@@ -1,0 +1,41 @@
+<script type="application/javascript">//<!--
+  const resStatus = new Status();
+  const replace = new Replace();
+  addEventListener("load", (e)=>{
+    statusDisplay();
+  });
+  addEventListener("resize", (e)=>{
+    resStatus.refresh();
+    statusDisplay();
+  });
+  const calendarObj = new Calendar();
+
+  replace.setTarget(NAME, "replc-title");
+  replace.setTarget(NAME, "replc-account");
+  replace.setTarget(NAME, "replc-cancelable");
+  replace.setTarget(NAME, "replc-start");
+  replace.setTarget(NAME, "replc-stop");
+
+  const calendars = document.getElementsByClassName("calendars")[0];
+  const links = document.getElementById("links");
+  links.innerText = "[読み込み中...]";
+
+  promisedRun("getReserve").then(reserve=>{
+    reserve = JSON.parse(reserve);
+    reserve.dates.list.forEach(date=>{
+      date.date = new Date(date.date)
+    });
+    replace.setTarget(NAME, "replc-title", reserve.config.title);
+    replace.setTarget(NAME, "replc-account", reserve.user.email);
+    replace.setTarget(NAME, "replc-cancelable", reserve.config.cancelable);
+    replace.setTarget(NAME, "replc-start", reserve.dates.list[0].date.toLocaleDateString("ja-JP", {weekday:"short", day:"numeric", month:"numeric", year:"numeric"}));
+    replace.setTarget(NAME, "replc-stop", reserve.dates.list[reserve.dates.list.length- 1].date.toLocaleDateString("ja-JP", {weekday:"short", day:"numeric", month:"numeric", year:"numeric"}));
+    load(reserve);
+    calendarObj.calendars.forEach(calendar=>{
+      calendars.appendChild(calendar.HTML);
+    });
+    statusDisplay();
+  }, error=>{
+    Error(error);
+  });
+//--></script>

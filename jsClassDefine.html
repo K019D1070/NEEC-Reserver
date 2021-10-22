@@ -1,0 +1,362 @@
+<script type="application/javascript">//<!--
+  class Calendar{
+    /**
+    * スプレッドシートから抜き出された歯抜けの日付を1か月全部あるカレンダー形式に整えます
+    * @param {Object} months - {$yaer$month: [dates]}
+    */
+    constructor(){
+      this.calendar = []; //[{month:{year: year, month: month}, dates: [{date: {date: dateObject, num: recordNumber}, type: dateType},...]},...] (dateType=予約対象か)
+      this.calendars = [];
+    }
+    genCalendar(months){
+      this.calendar = [];
+      Object.entries(months).forEach((month)=>{
+        const y = month[1][0].date.getFullYear();
+        const m = month[1][0].date.getMonth();
+        let thisMonth = {
+          month:{
+            year: y,
+            month: m
+          },
+          dates: []
+        };
+        //その月最初の日
+        const firstDay = new Date(y, m, 1);
+        const lastDay = new Date(y, m+1, 0);
+        for(let day = 1 -firstDay.getDay(), date = null, key = 0; day <= lastDay.getDate() || date.getDay() != 6; day++){
+          date = new Date(y, m, day);
+          switch(true){
+            case day <= 0: //前の月
+              thisMonth.dates.push({date: {date: new Date(y, m, day), num: null}, type: "void"});
+              break;
+            case day > lastDay.getDate(): //次の月
+              thisMonth.dates.push({date: {date: new Date(y, m, day), num: null}, type: "void"});
+              break;
+            case month[1][key] == undefined || !(day == month[1][key].date.getDate()): //予約対象外の日
+              thisMonth.dates.push({date: {date:new Date(y, m, day), num: null}, type: "none"});
+              break;
+            case day == month[1][key].date.getDate():
+              thisMonth.dates.push({date: month[1][key], type: "reservable"});
+              key++;
+          }
+        }
+        this.calendar.push(thisMonth);
+      });
+    }
+    genHTML(reserve){
+      this.calendars = [];
+      let quota = {dummy: true,count:()=>{}};
+      this.calendar.forEach(month=>{
+        const y = month.month.year;
+        const m = month.month.month+ 1;
+        const monthTable = document.createElement("div");
+        monthTable.id = `month-${String(y)+(m)}`;
+        monthTable.className = "monthTable";
+        const table = document.createElement("table");
+        const caption = document.createElement("caption");
+        const control = document.createElement("div");
+        control.innerHTML = `
+<button onclick="window.location.hash = 'month-${String(y)+(m)}';window.location.hash = 'index';">戻る</button><br>
+        `+ parts.usageGuide;
+        const title = document.createElement("div");
+        title.className = "month";
+        title.innerText = `${m}月`;
+        const thead = document.createElement("thead");
+        thead.innerHTML = parts.youbi;
+
+        let c = 0;
+        let tr = null;
+        caption.appendChild(control);
+        caption.appendChild(title);
+        table.appendChild(caption);
+        month.dates.forEach(date=>{
+          if(date.date.quota != null){
+            if(quota.dummy != true)quota.display();
+            quota = new Quota();
+            quota.setQuota(date.date.quota);
+            quota.register(caption);
+          }
+          let d = date.date.date;
+          const dt = d.getDate();
+          const day = d.getDay();
+          const type = date.type;
+          if(c++% 7 == 0){
+            tr = document.createElement("tr");
+            table.appendChild(tr);
+          }
+          const td = document.createElement("td");
+          td.className = type;
+          td.insertAdjacentHTML('beforeend', `<span class="date">${dt}</span>`);
+          switch(type){
+            case "reservable":
+              const capacity = date.date.capacity;
+              const members = date.date.members;
+              const reserved = members.indexOf(reserve.user.email[0]) != -1;
+              const reservation = members.length;
+              const button = document.createElement("canvas");
+              button.className = "status";
+              button.setAttribute("name", "reservation");
+              switch(true){
+                case capacity == 0:
+                  button.innerHTML = "announce";
+                  td.className = "fullHouse";
+                  break;
+                case reservation >= capacity:
+                  button.innerHTML = "full";
+                  break;
+                case 0.8 <= reservation/ capacity || (0.5 <= reservation/ capacity && capacity- reservation <= 2):
+                  button.innerHTML = "little";
+                  break;
+                case 0.5 <= reservation/ capacity:
+                  button.innerHTML = "free";
+                  break;
+                default:
+                  button.innerHTML = "leeway";
+                  break;
+              }
+              detailRegister(button, date);
+              const opeButton = document.createElement("button");
+              td.appendChild(button);
+              switch(true){
+                case reserved:
+                  td.className = "reserved";
+                  if(quota.dummy != true)quota.count();
+                  opeButton.innerText = "取消";
+                  opeButton.addEventListener("click", async (e)=>{
+                    opeButton.remove();
+                    const msg = document.createElement("span");
+                    msg.className = "message";
+                    msg.innerText = "操作中";
+                    td.appendChild(msg);
+                    const result = await promisedRun("opeCancel", date.date.num);
+                    if(result.result){
+                      msg.className = "message";
+                      msg.innerText = "操作成功";
+                      td.appendChild(msg);
+                    }
+                    reload();
+                  });
+                  break;
+                default:
+                  opeButton.innerText = "予約";
+                  opeButton.addEventListener("click", async (e)=>{
+                    opeButton.remove();
+                    const msg = document.createElement("span");
+                    msg.className = "message";
+                    msg.innerText = "操作中";
+                    td.appendChild(msg);
+                    const result = await promisedRun("opeReserve", date.date.num);
+                    if(!result.result){
+                      alert(result.reason);
+                    }else{
+                      msg.className = "message";
+                      msg.innerText = "操作成功";
+                      td.appendChild(msg);
+                    }
+                    reload();
+                  });
+              }
+              switch(true){
+                case !reserved && (button.innerHTML == "announce" || d.getTime()- (new Date(reserve.today)).getTime() <= reserve.config.cancelable* 3600* 1000 || button.innerHTML == "full"):
+                  const msg = document.createElement("span");
+                  msg.className = "message";
+                  if(date.date.comment.length > 7){
+                    msg.innerText = date.date.comment.slice(0,4)+ "...";
+                    detailRegister(msg, date);
+                  }else{
+                    msg.innerText = date.date.comment;
+                  }
+                  td.appendChild(msg);
+                  break;
+                case reserved && d.getTime() < (new Date(reserve.today)).getTime():
+                  break;
+                default:
+                  td.appendChild(opeButton);
+              }
+              break;
+          }
+          tr.appendChild(td);
+        });
+        table.appendChild(thead);
+        monthTable.appendChild(table);
+        this.calendars.push({id: `month-${String(y)+(m)}`, m: m, y: y, HTML: monthTable});
+      });
+      if(quota.dummy != true)quota.display();
+    }
+    genLinks(){
+      let links = "";
+      this.calendars.forEach(m=>{
+        links += `<button onclick="window.location.hash = 'index';window.location.hash = '${m.id}'">${m.y}年${m.m}月</button><br>`
+      });
+      return links;
+    }
+  }
+  class Quota{
+    //DOM登録バージョン(Client)
+    constructor(){
+      this.counter = 0;
+      this.domList = [];
+    }
+    count(){
+      this.counter++;
+    }
+    register(caption){
+      this.domList.push(caption);
+    }
+    setQuota(q){
+      this.q = q;
+    }
+    display(){
+      this.domList.forEach(dom=>{
+        const counter = document.createElement("div");
+        counter.className = "counter";
+        counter.innerHTML = `${this.counter} / ${this.q}`;
+        dom.appendChild(counter);
+      });
+    }
+  }
+  class Status{
+    constructor(){
+      this.window = document.getElementById("reservations");
+      this.window.addEventListener("click", (e)=>{this.hide()});
+      this.status = {
+        display: false,
+        top: 0
+      };
+      this.members = {};
+      this.elm;
+    }
+    refresh(){
+      const position = this.elm.getBoundingClientRect();
+      if(this.status.display){
+        this.move(position.top+ window.pageYOffset, position.left+ window.pageXOffset);
+      }else{
+        this.appear(position.top+ window.pageYOffset, position.left+ window.pageXOffset);
+      }
+    }
+    move(top, left){
+      this.window.style.animationName = "moveReservations";
+      let animation = this.window.getAnimations()[0];
+      let keyframe = animation.effect;
+      animation.currentTime = 0;
+      keyframe.setKeyframes([
+        {
+          opacity: 1,
+          zIndex: 1,
+          top: `${this.status.top}px`,
+          left: `${this.status.left}px`
+        },
+        {
+          opacity: 1,
+          zIndex: 1,
+          top: `${top+ 5}px`,
+          left: `${left+ 5}px`
+        }
+      ]);
+      this.status.top = top+ 5;
+      this.status.left = left+ 5;
+      this.play();
+    }
+    appear(top, left){
+      this.window.style.animationName = "appearReservations";
+      let keyframe = this.window.getAnimations()[0].effect;
+      keyframe.setKeyframes([
+        {
+          opacity: "0",
+          zIndex: 1,
+          top: "-100px"
+        },
+        {
+          opacity: 1,
+          zIndex: 1,
+          top: `${top+ 5}px`,
+          left: `${left+ 5}px`
+        }
+      ]);
+      this.status.top = top+ 5;
+      this.status.left = left+ 5;
+      this.play();
+      this.status.display = true;
+    }
+    hide(){
+      this.window.style.animationName = "disappearReservations";
+      let keyframe = this.window.getAnimations()[0].effect;
+      keyframe.setKeyframes([
+        {
+          opacity: 1,
+          zIndex: 1,
+          top: `${this.status.top}px`,
+          left: `${this.status.left}px`
+        },
+        {
+          opacity: 0,
+          zIndex: 0,
+          top: "-100px"
+        }
+      ]);
+      this.play();
+      this.status.display = false;
+      this.elm = null;
+    }
+    play(){
+      this.window.style.animationPlayState = "running";
+    }
+    display(elm, date){
+      this.window.innerHTML = `<span style="position: absolute; top:-0.25em; left: 0em; font-size: 2em;">×</span>${date.members.length} / ${date.capacity}<br>`;
+      this.window.insertAdjacentHTML('beforeend', date.comment);
+      date.members.forEach(mail=>{
+        this.window.appendChild(document.createElement("ul")).appendChild(document.createElement("li")).innerHTML = `${mail}`;
+      });
+      this.elm = elm;
+      let position = this.elm.getBoundingClientRect();
+      this.refresh();
+    }
+  }
+  const NAME = "name";
+  const NAMEHTML = "nameHTML";
+  const CLASS = "class";
+  class Replace{
+    constructor(){
+      this.target = {
+        name: {
+          "replc-account": ""
+        },
+        class: {},
+        nameHTML: {}
+      };
+    }
+    setTarget(type, name, value = "[読み込み中…]"){
+      this.target[type][name] = value;
+      this.do(type, name);
+    }
+    do(targetType, manTarget){
+      if(manTarget == undefined || targetType == undefined){
+        Object.keys(this.target.class).forEach(tag=>{
+          document.getElementsByClassName(tag).forEach(elm=>{
+            elm.innerText = this.target.class.target[tag];
+          });
+        });
+        Object.keys(this.target.name).forEach(tag=>{
+          document.getElementsByName(tag).forEach(elm=>{
+            elm.innerText = this.target.name.target[tag];
+          });
+        });
+      }else{
+        if(this.target[targetType] != undefined && this.target[targetType][manTarget] != undefined){
+          switch(targetType){
+            case NAME:
+              document.getElementsByName(manTarget).forEach(elm=>{
+                elm.innerText = this.target[targetType][manTarget];
+              });
+              break;
+            case CLASS:
+              document.getElementsByClassName(manTarget).forEach(elm=>{
+                elm.innerText = this.target[targetType][manTarget];
+              });
+              break;
+          }
+        }
+      }
+    }
+  }
+//--></script>

@@ -35,11 +35,12 @@ class Quota{
     const members = ss.getMembers(1);
     let result = [];
     this.quota.everyQuotas.forEach(everyQuota=>{
+      Logger.log(everyQuota);
       const notEnoughList = [];
       members.forEach(member=>{
         let found = 0;
         for(let i = 0; found < everyQuota.quota && i < everyQuota.membersList.length; i++){
-          if(String(everyQuota.membersList[i]).search(new RegExp(member[0], "i")) >= 0){
+          if(String(everyQuota.membersList[i]).search(new RegExp(member[1], "i")) >= 0){
             found++;
           }
         }
@@ -48,7 +49,6 @@ class Quota{
         }
       });
       everyQuota.notEnoughList = notEnoughList;
-      Logger.log(everyQuota.days);
       everyQuota.days.sort((a, b)=>{
         return a.getTime() - b.getTime();
       });

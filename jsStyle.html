@@ -1,0 +1,225 @@
+<script type="application/javascript">//<!--
+  /*クラス class*/
+  class Status{
+    constructor(){
+      this.popup = document.getElementById("reservations");
+      this.popup.addEventListener("click", (e)=>{this.hide()});
+      this.status = {
+        display: false,
+        top: 0,
+        left: 0
+      };
+      this.members = {};
+      this.origin;
+    }
+    refresh(){
+      const position = this.origin.getBoundingClientRect();
+      this.popup.replaceChildren(this.buffer);
+      if(this.status.display){
+        this.move(position.top+ window.pageYOffset, position.left+ window.pageXOffset);
+      }else{
+        this.appear(position.top+ window.pageYOffset, position.left+ window.pageXOffset);
+      }
+    }
+    move(top, left){
+      this.popup.style.animationName = "moveReservations";
+      let animation = this.popup.getAnimations()[0];
+      let keyframe = animation.effect;
+      animation.currentTime = 0;
+      keyframe.setKeyframes([
+        {
+          opacity: 1,
+          zIndex: 1,
+          top: `${this.status.top}px`,
+          left: `${this.status.left}px`
+        },
+        {
+          opacity: 1,
+          zIndex: 1,
+          top: `${top+ 5}px`,
+          left: `${left+ 5}px`
+        }
+      ]);
+      this.status.top = top+ 5;
+      this.status.left = left+ 5;
+      this.play();
+    }
+    appear(top, left){
+      this.popup.style.animationName = "appearReservations";
+      let keyframe = this.popup.getAnimations()[0].effect;
+      keyframe.setKeyframes([
+        {
+          opacity: "0",
+          zIndex: 1,
+          top: "-100px"
+        },
+        {
+          opacity: 1,
+          zIndex: 1,
+          top: `${top+ 5}px`,
+          left: `${left+ 5}px`
+        }
+      ]);
+      this.status.top = top+ 5;
+      this.status.left = left+ 5;
+      this.play();
+      this.status.display = true;
+    }
+    hide(){
+      this.popup.style.animationName = "disappearReservations";
+      let keyframe = this.popup.getAnimations()[0].effect;
+      keyframe.setKeyframes([
+        {
+          opacity: 1,
+          zIndex: 1,
+          top: `${this.status.top}px`,
+          left: `${this.status.left}px`
+        },
+        {
+          opacity: 0,
+          zIndex: 0,
+          top: "-100%"
+        }
+      ]);
+      this.play();
+      this.status.display = false;
+      this.origin = null;
+    }
+    display(elm, date){
+      this.origin = elm;
+      this.buffer = document.createElement("span");
+      this.buffer.innerHTML = `<span style="position: absolute; top:-0.25em; left: 0em; font-size: 2em;">×</span>${date.members.length} / ${date.capacity}<br>`;
+      this.buffer.insertAdjacentHTML('beforeend', date.comment);
+      const list = document.createElement("ul");
+      date.members.forEach(mail=>{
+        list.appendChild(document.createElement("li")).innerText = `${mail}`;
+      });
+      this.buffer.appendChild(list);
+      this.refresh();
+    }
+    play(){
+      this.popup.style.animationPlayState = "running";
+    }
+  }
+  const NAME = "name";
+  const NAMEHTML = "nameHTML";
+  const CLASS = "class";
+  class Replace{
+    constructor(){
+      this.target = {
+        name: {
+          "replc-account": ""
+        },
+        class: {},
+        nameHTML: {}
+      };
+    }
+    setTarget(type, name, value = "[読み込み中…]"){
+      this.target[type][name] = value;
+      this.do(type, name);
+    }
+    do(targetType, manTarget){
+      if(manTarget == undefined || targetType == undefined){
+        Object.keys(this.target.class).forEach(tag=>{
+          document.getElementsByClassName(tag).forEach(elm=>{
+            elm.innerText = this.target.class.target[tag];
+          });
+        });
+        Object.keys(this.target.name).forEach(tag=>{
+          document.getElementsByName(tag).forEach(elm=>{
+            elm.innerText = this.target.name.target[tag];
+          });
+        });
+      }else{
+        if(this.target[targetType] != undefined && this.target[targetType][manTarget] != undefined){
+          switch(targetType){
+            case NAME:
+              document.getElementsByName(manTarget).forEach(elm=>{
+                elm.innerText = this.target[targetType][manTarget];
+              });
+              break;
+            case CLASS:
+              document.getElementsByClassName(manTarget).forEach(elm=>{
+                elm.innerText = this.target[targetType][manTarget];
+              });
+              break;
+          }
+        }
+      }
+    }
+  }
+  /*関数 Function*/
+  function detailRegister(elm, date){
+    elm.addEventListener("click", elm=>{
+      resStatus.display(elm.srcElement, date.date);
+    });
+  }
+  function statusDisplay(){
+    document.getElementsByName("reservation").forEach((canvas)=>{
+      canvas.width = canvas.clientWidth*4;
+      canvas.height = canvas.clientHeight*4;
+      const context = canvas.getContext("2d");
+
+      context.beginPath();
+      context.lineWidth = 20;
+      switch(canvas.innerHTML){
+        case "leeway"://◎
+          context.strokeStyle = '#ff0000';
+          context.arc(canvas.width/ 2, canvas.height/ 2, (canvas.height-context.lineWidth)/2, 2* Math.PI, 0);
+          context.stroke();
+          context.beginPath();
+          context.arc(canvas.width/ 2, canvas.height/ 2, (canvas.height-context.lineWidth*4)/2, 2* Math.PI, 0);
+          context.stroke();
+          break;
+        case "free"://〇
+          context.strokeStyle = '#ff0000';
+          context.arc(canvas.width/ 2, canvas.height/ 2, (canvas.height-context.lineWidth)/2, 2* Math.PI, 0);
+          context.stroke();
+          break;
+        case "little"://△
+          context.strokeStyle = '#00ff00';
+          context.moveTo(canvas.width/2- canvas.height*Math.cos(Math.PI/3), canvas.height-context.lineWidth/2);
+          context.lineTo(canvas.width/2, context.lineWidth/2);
+          context.lineTo(canvas.width/2+ canvas.height*Math.cos(Math.PI/3), canvas.height-context.lineWidth/2);
+          context.lineTo(canvas.width/2- canvas.height*Math.cos(Math.PI/3), canvas.height-context.lineWidth/2);
+          context.lineTo(canvas.width/2, context.lineWidth/2);
+          context.stroke();
+          break;
+        case "full"://×
+          context.strokeStyle = '#0000ff';
+          context.moveTo(canvas.width/2+ canvas.height/2 -context.lineWidth/2, context.lineWidth/2);
+          context.lineTo(canvas.width/2- canvas.height/2 +context.lineWidth/2, canvas.height- context.lineWidth/2);
+          context.moveTo(canvas.width/2+ canvas.height/2 -context.lineWidth/2, canvas.height- context.lineWidth/2);
+          context.lineTo(canvas.width/2- canvas.height/2 +context.lineWidth/2, context.lineWidth/2);
+          context.stroke();
+          break;
+        case "announce"://📢
+          context.fillStyle = '#dddd00';
+          context.strokeStyle = '#dddd00';
+          context.moveTo(canvas.width/2- canvas.height*2/5, canvas.height/2);
+          context.lineTo(canvas.width/2- canvas.height*2/5, canvas.height*5/9);
+          context.lineTo(canvas.width/2+ canvas.height*0/5, canvas.height*1/3);
+          context.lineTo(canvas.width/2+ canvas.height*0/5, canvas.height*2/3);
+          context.lineTo(canvas.width/2- canvas.height*2/5, canvas.height*4/9);
+          context.lineTo(canvas.width/2- canvas.height*2/5, canvas.height/2);
+          context.fill();
+          context.stroke();
+          context.closePath();
+          context.beginPath();
+          context.lineWidth = 10;
+          context.strokeStyle = '#ff5500';
+          context.arc(canvas.width/2, canvas.height/2, canvas.height/6, -Math.PI/4, Math.PI/4);
+          context.stroke();
+          context.closePath();
+          context.beginPath();
+          context.arc(canvas.width/2, canvas.height/2, canvas.height/3, -Math.PI/5, Math.PI/5);
+          context.stroke();
+          context.closePath();
+          context.beginPath();
+          context.arc(canvas.width/2, canvas.height/2, canvas.height/2, -Math.PI/5, Math.PI/5);
+          context.stroke();
+          break;
+      }
+    });
+  }
+//--></script>

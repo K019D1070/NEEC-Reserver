@@ -3,8 +3,7 @@ class Reserve{
     performanceMonitor.post("Reserver initializing");
     this.config = {
       "title": "卒業制作",
-      "webinterface": "https://sites.google.com/g.neec.ac.jp/k019d1070/",
-      "cancelable": 6
+      cancelable: 6
     };
     this.user = {};
     this.dates = {
@@ -55,7 +54,6 @@ class Reserve{
     this.dates.list.sort((a, b)=>{
       return a.date.getTime() - b.date.getTime();
     });
-    Logge.log(this.dates.list);
     performanceMonitor.post("Date loaded");
   }
   copyThis(){

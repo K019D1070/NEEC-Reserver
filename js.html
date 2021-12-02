@@ -5,7 +5,7 @@
     statusDisplay();
   });
   addEventListener("resize", (e)=>{
-    resStatus.refresh();
+    if(resStatus.status.display)resStatus.refresh();
     statusDisplay();
   });
   const calendarObj = new Calendar();

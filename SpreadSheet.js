@@ -3,10 +3,14 @@ class SpreadSheet{
   constructor(sheetName, pareName, displayName, quotaName){
     this.ss = SpreadsheetApp.getActive();
     performanceMonitor.post("Activesheet got");
+    this.sheetName = sheetName;
     this.sheet = this.ss.getSheetByName(sheetName);
+    this.pareName = pareName;
     this.pare = this.ss.getSheetByName(pareName);
-    this.display = this.ss.getSheetByName(displayName);
-    this.quota = this.ss.getSheetByName(quotaName);
+    this.displayName = displayName;
+    this.display = null;
+    this.quotaName = quotaName;
+    this.quota = null;
     this.lc = this.sheet.getLastColumn();
     this.lr = this.sheet.getLastRow();
     this.config = {
@@ -46,16 +50,27 @@ class SpreadSheet{
   configure(){
     if(!this.status.configured)this.autoConfig();
   }
+  configureDiaplays(){
+    if(!this.display){
+      this.display = this.ss.getSheetByName(this.displayName);
+    }
+    if(!this.quota){
+      this.quota = this.ss.getSheetByName(this.quotaName);
+    }
+  }
   setConfig(key, value){
     this.config[key] = value;
   }
   getValue(r, c, sheet = this.sheet){
+    this.configureDiaplays();
     return sheet.getRange(r, c).getValue();
   }
   setValue(r, c, v, sheet = this.sheet){
+    this.configureDiaplays();
     return sheet.getRange(r, c).setValue(v);
   }
   getValues(r, c, rr, cr, sheet = this.sheet){
+    this.configureDiaplays();
     return sheet.getRange(r, c, rr, cr).getValues();
   }
   /**
@@ -88,9 +103,17 @@ class SpreadSheet{
   */
   getRecord(num){
     this.configure();
-    const recordRange = [this.config.startrow+ num- 1, this.config.startcol, 1, this.lc- this.config.startcol+ 1];
-    const row = this.getValues(...recordRange)[0];
+    let recordRange = [this.config.startrow+ num- 1, this.config.startcol, 1, this.lc];
+    if(this.lc- this.config.startcol+ 1 < this.config.capacity){//デフォの人数より取得人数が少ない場合
+      recordRange[3] = this.config.capacity;
+    }
+    let row = this.getValues(...recordRange)[0];
     const capacity = Number(String(row[this.config.capacitycol- 1]) || this.config.capacity);
+    if(recordRange < capacity){//デフォの人数より取得人数が少ない場合
+      recordRange[3] = capacity;
+    }
+    row = this.getValues(...recordRange)[0];
+
     const members = row.slice(this.config.membercol- 1, this.config.membercol- 1+ Number(String(row[this.config.capacitycol- 1]) || this.config.capacity));
     return {
       date: row[this.config.datecol- 1],

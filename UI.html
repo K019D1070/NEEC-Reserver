@@ -31,11 +31,14 @@
     <div class="usageGuide">
       <span class="reservable">予約なし</span>
       <span class="reserved">予約済み</span>
+      <span class="fullHouse">アナウンス</span>
+      <span style="border: 0.05em solid #1a8ce8; color: #1a73e8;">本日</span>
     </div>
     <h2>注意事項</h2>
     当日0時より<span name="replc-cancelable"></span>時間前はキャンセルできません
     <div class="calendars"></div>
     <?!= HtmlService.createHtmlOutputFromFile('htmlParts').getContent(); ?>
+    <?!= HtmlService.createHtmlOutputFromFile('jsStyle').getContent(); ?>
     <?!= HtmlService.createHtmlOutputFromFile('jsClassDefine').getContent(); ?>
     <?!= HtmlService.createHtmlOutputFromFile('jsFunctionDefine').getContent(); ?>
     <?!= HtmlService.createHtmlOutputFromFile('js').getContent(); ?>

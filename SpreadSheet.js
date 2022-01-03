@@ -103,17 +103,21 @@ class SpreadSheet{
   */
   getRecord(num){
     this.configure();
-    let recordRange = [this.config.startrow+ num- 1, this.config.startcol, 1, this.lc];
-    if(this.lc- this.config.startcol+ 1 < this.config.capacity){//デフォの人数より取得人数が少ない場合
-      recordRange[3] = this.config.capacity;
-    }
+    let capacity = this.config.capacity;
+    let recordRange = [this.config.startrow+ num- 1, this.config.startcol, 1, this.config.membercol+ capacity];
     let row = this.getValues(...recordRange)[0];
-    const capacity = Number(String(row[this.config.capacitycol- 1]) || this.config.capacity);
-    if(recordRange < capacity){//デフォの人数より取得人数が少ない場合
-      recordRange[3] = capacity;
+    switch(true){
+      case "" == row[this.config.capacitycol- 1]: //個別上限の設定がない
+        break;
+      case this.config.capacity < row[this.config.capacitycol- 1]: //デフォルトの上限人数より多い個別上限が設定されている場合(レコードの取得範囲に枠が乗りきっていない場合)
+        capacity = row[this.config.capacitycol- 1];
+        recordRange[3] = this.config.membercol+ capacity;
+        row = this.getValues(...recordRange)[0];
+        break;
+      default:
+        capacity = row[this.config.capacitycol- 1];
+        break;
     }
-    row = this.getValues(...recordRange)[0];
-
     const members = row.slice(this.config.membercol- 1, this.config.membercol- 1+ Number(String(row[this.config.capacitycol- 1]) || this.config.capacity));
     return {
       date: row[this.config.datecol- 1],

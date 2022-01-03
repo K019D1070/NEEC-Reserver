@@ -12,8 +12,7 @@ function opeReserve(num){
   const numVal = members.indexOf("");
   const reserved = members.indexOf(reserve.user.email) != -1;
   let result = {result: true};
-  //if(( -1 == numVal) && !reserved){/////////////////手を入れる(capacityとmamber.lengthの比較で判定、memberにpushしたやつを追加)
-  if(record.capacity <= members.length() && !reserved){/////////////////手を入れる(capacityとmamber.lengthの比較で判定、memberにpushしたやつを追加)
+  if(( -1 == numVal) && !reserved){
     result.result = false;
     result.reason = "満員のため予約に失敗しました。";
   }else if(record.date.getTime() < Date.now()){

@@ -76,7 +76,7 @@
           const day = d.getDay();
           const type = date.type;
           if(date.date.quota != null){
-            quota = qm.makeQuota(date.date.quota, d);
+            qm.makeQuota(date.date.quota, d);
           }
           if(c++% 7 == 0){
             tr = document.createElement("tr");
@@ -186,7 +186,7 @@
         monthTable.appendChild(table);
         this.calendars.push({id: `month-${String(y)+(m)}`, m: m, y: y, HTML: monthTable});
       });
-      if(quota.dummy != true)quota.display();
+      qm.display();
     }
     genLinks(){
       let links = "";
@@ -226,7 +226,7 @@
   }
   class QuotaManager{
     constructor(){
-      this.QoutaList = [];
+      this.QuotaList = [];
       this.seekedQuota = null;
     }
     makeQuota(...[q, start]){
@@ -251,7 +251,7 @@
       }
     }
     display(){
-      this.QoutaList.forEach(quotaInList=>{
+      this.QuotaList.forEach(quotaInList=>{
         quotaInList.display();
       });
     }

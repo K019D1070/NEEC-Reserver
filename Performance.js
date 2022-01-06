@@ -1,5 +1,5 @@
 class Performance{
-  constructor(enabled){
+  constructor(enabled = true){
     this.enabled = enabled;
     this.initTime = Date.now();
     this.lastPost = this.initTime;

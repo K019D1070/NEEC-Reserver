@@ -31,6 +31,14 @@ reserve.setConfig("cancelable", config[1][4]);
 performanceMonitor.post("All initialized");
 
 function doGet(e){
+  if(config[0][2] != ""){
+    return HtmlService.createHtmlOutput(`
+      <script type="application/javascript">
+      alert("予約ページは新バージョンへ移行しました。リンクをクリックして新バージョンに移動してください。");
+      </script>
+      <a href="${config[0][2]}" target="_blank">新バージョン</a>
+      `);
+  }
   performanceMonitor.post("Generating HTML");
   const template = HtmlService.createTemplateFromFile("UI").evaluate();
   template.setTitle(`${reserve.config.title} - 出席予約システム`).addMetaTag('viewport', 'width=device-width, initial-scale=1');

@@ -46,7 +46,7 @@
     genHTML(reserve){
       reserve.today = new Date(reserve.today);
       this.calendars = [];
-      let quota = {dummy: true};
+      let qm = new QuotaManager();
       this.calendar.forEach(month=>{
         const y = month.month.year;
         const m = month.month.month+ 1;
@@ -76,8 +76,7 @@
           const day = d.getDay();
           const type = date.type;
           if(date.date.quota != null){
-            if(quota.dummy != true)quota.display();
-            quota = new Quota(date.date.quota, d);
+            qm.makeQuota(date.date.quota, d);
           }
           if(c++% 7 == 0){
             tr = document.createElement("tr");
@@ -88,7 +87,8 @@
           td.insertAdjacentHTML('beforeend', `<span class="date">${dt}</span>`);
           switch(type){
             case "reservable":
-              if(quota.dummy != true)quota.addDay(d);quota.register(caption);
+              qm.addDay(d);
+              qm.domRegistration(caption);
               const capacity = date.date.capacity;
               const members = date.date.members;
               const reserved = members.indexOf(reserve.user.email[0]) != -1;
@@ -120,7 +120,7 @@
               switch(true){
                 case reserved:
                   td.className = "reserved";
-                  if(quota.dummy != true)quota.count();
+                  qm.count();
                   opeButton.innerText = "取消";
                   opeButton.addEventListener("click", async (e)=>{
                     opeButton.remove();
@@ -186,7 +186,7 @@
         monthTable.appendChild(table);
         this.calendars.push({id: `month-${String(y)+(m)}`, m: m, y: y, HTML: monthTable});
       });
-      if(quota.dummy != true)quota.display();
+      qm.display();
     }
     genLinks(){
       let links = "";
@@ -221,6 +221,38 @@
         counter.className = "counter";
         counter.innerText = `${start.toLocaleDateString("ja-JP", {weekday:"short", day:"numeric", month:"numeric", year:"numeric"})}～${until.toLocaleDateString("ja-JP", {weekday:"short", day:"numeric", month:"numeric", year:"numeric"})} ${this.counter} / ${this.q}`;
         dom.appendChild(counter);
+      });
+    }
+  }
+  class QuotaManager{
+    constructor(){
+      this.QuotaList = [];
+      this.seekedQuota = null;
+    }
+    makeQuota(...[q, start]){
+      const quotaBeenMade = new Quota(q,start);
+      this.QuotaList.push(quotaBeenMade);
+      this.seekedQuota = quotaBeenMade;
+      return quotaBeenMade;
+    }
+    count(...args){
+      if(this.seekedQuota){
+        this.seekedQuota.count(...args)
+      }
+    }
+    domRegistration(...args){
+      if(this.seekedQuota){
+        this.seekedQuota.register(...args)
+      }
+    }
+    addDay(...args){
+      if(this.seekedQuota){
+        this.seekedQuota.addDay(...args)
+      }
+    }
+    display(){
+      this.QuotaList.forEach(quotaInList=>{
+        quotaInList.display();
       });
     }
   }

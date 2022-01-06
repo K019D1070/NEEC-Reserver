@@ -50,10 +50,12 @@ class Reserve{
       this.dates.list.push(record);
     });
     performanceMonitor.process("process of mail⇒name");
-    performanceMonitor.post("Date sorting");
-    this.dates.list.sort((a, b)=>{
-      return a.date.getTime() - b.date.getTime();
-    });
+    if(config[1][2]){
+      performanceMonitor.post("Date sorting");
+      this.dates.list.sort((a, b)=>{
+        return a.date.getTime() - b.date.getTime();
+      });
+    }
     performanceMonitor.post("Date loaded");
   }
   copyThis(){

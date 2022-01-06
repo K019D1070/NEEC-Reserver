@@ -23,8 +23,9 @@
         //その月最初の日
         const firstDay = new Date(y, m, 1);
         const lastDay = new Date(y, m+1, 0);
-        for(let day = 1 -firstDay.getDay(), date = null, key = 0; day <= lastDay.getDate() || date.getDay() != 6; day++){
+        for(let day = 1 -firstDay.getDay(), date = null; day <= lastDay.getDate() || date.getDay() != 6; day++){
           date = new Date(y, m, day);
+          const d = month[1].find(date=> day == date.date.getDate());
           switch(true){
             case day <= 0: //前の月
               thisMonth.dates.push({date: {date: new Date(y, m, day), num: null}, type: "void"});
@@ -32,12 +33,11 @@
             case day > lastDay.getDate(): //次の月
               thisMonth.dates.push({date: {date: new Date(y, m, day), num: null}, type: "void"});
               break;
-            case month[1][key] == undefined || !(day == month[1][key].date.getDate()): //予約対象外の日
+            case d == undefined: //予約対象外の日
               thisMonth.dates.push({date: {date:new Date(y, m, day), num: null}, type: "none"});
               break;
-            case day == month[1][key].date.getDate():
-              thisMonth.dates.push({date: month[1][key], type: "reservable"});
-              key++;
+            case d != undefined:
+              thisMonth.dates.push({date: d, type: "reservable"});
           }
         }
         this.calendar.push(thisMonth);

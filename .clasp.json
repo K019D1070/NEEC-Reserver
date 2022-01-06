@@ -1,12 +1,12 @@
 {
   "scriptId":"1msV4uR211ny7xzx4uEQGBj74qdPHI6GV2A_Eji3bIODtir9fhxAo8Al0",
-  "rootDir":"/root/working/NEEC-Reserve",
+  "rootDir":"/root/working/NEEC-Reserver",
   "filePushOrder": [
-    "/root/working/NEEC-Reserve/Performance.js",
-    "/root/working/NEEC-Reserve/defines.js",
-    "/root/working/NEEC-Reserve/SpreadSheet.js",
-    "/root/working/NEEC-Reserve/convertName.js",
-    "/root/working/NEEC-Reserve/Reserve.js",
-    "/root/working/NEEC-Reserve/UI.html"
+    "/root/working/NEEC-Reserver/Performance.js",
+    "/root/working/NEEC-Reserver/defines.js",
+    "/root/working/NEEC-Reserver/SpreadSheet.js",
+    "/root/working/NEEC-Reserver/convertName.js",
+    "/root/working/NEEC-Reserver/Reserve.js",
+    "/root/working/NEEC-Reserver/UI.html"
   ]
 }

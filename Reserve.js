@@ -2,8 +2,8 @@ class Reserve{
   constructor(){
     performanceMonitor.post("Reserver initializing");
     this.config = {
-      "title": "卒業制作",
-      cancelable: 6
+      "title": "",
+      cancelable: 0
     };
     this.user = {};
     this.dates = {

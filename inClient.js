@@ -8,6 +8,7 @@ function getReserve(){
 function opeReserve(num){
   reserve.accountCheck();
   const record = ss.getRecord(num);
+  ss.log([reserve.user.email, ...reserve.convert(reserve.user.email), `+${record.date.getFullYear()}/${record.date.getMonth()+ 1}/${record.date.getDate()}`], true);
   const members = record.members;
   const numVal = members.indexOf("");
   const reserved = members.indexOf(reserve.user.email) != -1;
@@ -26,7 +27,9 @@ function opeReserve(num){
 }
 function opeCancel(num){
   reserve.accountCheck();
-  const members = ss.getRecord(num).members;
+  const record = ss.getRecord(num);
+  ss.log([reserve.user.email, ...reserve.convert(reserve.user.email), `-${record.date.getFullYear()}/${record.date.getMonth()+ 1}/${record.date.getDate()}`], true);
+  const members = record.members;
   const numVal = members.indexOf(reserve.user.email);
   if(members.indexOf(reserve.user.email) != -1){
     ss.clearValueFromRecord(num ,numVal);

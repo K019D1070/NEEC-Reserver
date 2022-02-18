@@ -6,6 +6,7 @@
       });
       let timeout = setTimeout(6* 60* 1000, ()=>{//GASは6分でタイムアウトするため6分以上待ってもダメならダメ
         alert("カレンダーの読み込みに失敗しました\nGoogle App Scriptの障害情報を確認してください。\n特に障害もなく数時間後に試しても状況が改善されない場合、サポートに連絡してください。");
+        reject();
       });
       google.script.run.withSuccessHandler((dates)=>{
         clearTimeout(timeAlert);
@@ -23,9 +24,7 @@
     reserve.dates.list.forEach((date)=>{
       let y = date.date.getFullYear();
       let m = date.date.getMonth();
-      if(m<10){
-        m = String(0)+m;
-      }
+      m = String(m).padStart(2, "0");
       if(undefined == months[String(y)+m]){
         months[String(y)+m] = [];
       }

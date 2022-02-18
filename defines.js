@@ -61,3 +61,6 @@ class Quota{
     return result;
   }
 }
+function datePadding(str){
+  return String(str).padStart(2, "0");
+}

@@ -4,6 +4,9 @@ class Convert{
     this.index = {};
   }
   mailToNames(members){
+    if(!Array.isArray(members)){
+      members = [members];
+    }
     const pare = this.pare;
     const index = this.index;
     const replacedMembers = [];

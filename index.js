@@ -11,10 +11,11 @@ const config_DBSHEETNAME = "予約データ";
 const config_PARESHEETNAME = "対応データ";
 const config_DISPLAYSHEETNAME = "予約一覧";
 const config_QUOTASHEETNAME = "ノルマ未達";
+const config_LOGSHEETNAME = "Log";
 
 const performanceMonitor = new Performance(false);
 performanceMonitor.post("Spreadsheet initializing");
-const ss = new SpreadSheet(config_DBSHEETNAME, config_PARESHEETNAME, config_DISPLAYSHEETNAME, config_QUOTASHEETNAME);
+const ss = new SpreadSheet(config_DBSHEETNAME, config_PARESHEETNAME, config_DISPLAYSHEETNAME, config_QUOTASHEETNAME, config_LOGSHEETNAME);
 const config = ss.getValues(1, 2, 2, 5);
 ss.setConfig("capacity", config[1][0]);
 ss.setConfig("startrow", config_STARTROW);

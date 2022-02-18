@@ -1,6 +1,6 @@
 class SpreadSheet{
   //1日ごとのデータ({日付: Date,予約者: [member,...], 予約上限: Number})をrecord,日付データをdatesと呼ぶ
-  constructor(sheetName, pareName, displayName, quotaName){
+  constructor(sheetName, pareName, displayName, quotaName, logName){
     this.ss = SpreadsheetApp.getActive();
     performanceMonitor.post("Activesheet got");
     this.sheetName = sheetName;
@@ -11,6 +11,9 @@ class SpreadSheet{
     this.display = null;
     this.quotaName = quotaName;
     this.quota = null;
+    this.loggingName = logName;
+    this.logging = null;
+    this.loggingBuffer = [];
     this.lc = this.sheet.getLastColumn();
     this.lr = this.sheet.getLastRow();
     this.config = {
@@ -50,28 +53,36 @@ class SpreadSheet{
   configure(){
     if(!this.status.configured)this.autoConfig();
   }
-  configureDiaplays(){
+  configureDisplays(){
+    //表示高速化のためにスプレッドシートに変更があるときだけtrig()(スプレッドシートでの表示シート更新関数)用に表示シートを読み込む
     if(!this.display){
       this.display = this.ss.getSheetByName(this.displayName);
     }
     if(!this.quota){
       this.quota = this.ss.getSheetByName(this.quotaName);
     }
+    if(!this.logging){
+      this.logging = this.ss.getSheetByName("Log");
+    }
   }
   setConfig(key, value){
     this.config[key] = value;
   }
   getValue(r, c, sheet = this.sheet){
-    this.configureDiaplays();
+    this.configureDisplays();
     return sheet.getRange(r, c).getValue();
   }
   setValue(r, c, v, sheet = this.sheet){
-    this.configureDiaplays();
+    this.configureDisplays();
     return sheet.getRange(r, c).setValue(v);
   }
   getValues(r, c, rr, cr, sheet = this.sheet){
-    this.configureDiaplays();
+    this.configureDisplays();
     return sheet.getRange(r, c, rr, cr).getValues();
+  }
+  setValues(r, c, rr, cr, v, sheet = this.sheet){
+    this.configureDisplays();
+    return sheet.getRange(r, c, rr, cr).setValues(v);
   }
   /**
    * 対応表からメールアドレスと名前がペアになったオブジェクト・2次元配列を取得
@@ -164,5 +175,27 @@ class SpreadSheet{
   clearValueFromRecord(num, cell){
     this.configure();
     this.sheet.getRange(this.config.startrow+ num- 1, this.config.membercol+ cell).clearContent();
+  }
+  log(content, now = false){
+    const time = new Date();
+    let c = [`${time.getFullYear()}/${datePadding(time.getMonth()+ 1)}/${datePadding(time.getDate())} ${datePadding(time.getHours())}:${datePadding(time.getMinutes())}:${datePadding(time.getSeconds())} UTC+${-time.getTimezoneOffset()/ 60}`];
+    if(Array.isArray(content)){
+      c.push(...content);
+    }else{
+      c.push(content);
+    }
+    this.loggingBuffer.push(c);
+    if(now)this.logFlush();
+  }
+  logFlush(){
+    this.configureDisplays();
+    let logs = this.getValue(1, 2, this.logging);
+    let maxColmuns = 0;
+    this.loggingBuffer.forEach(row=>{
+      const l = row.length;
+      if(maxColmuns < l)maxColmuns = l;
+    });
+    this.setValues(3+ logs, 1, this.loggingBuffer.length, maxColmuns, this.loggingBuffer, this.logging);
+    this.setValue(1, 2, logs+ this.loggingBuffer.length, this.logging);
   }
 }

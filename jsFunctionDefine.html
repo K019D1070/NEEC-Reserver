@@ -49,6 +49,7 @@
         target.getElementsByTagName("table")[0].remove();
       });
       statusDisplay();
+      if(resStatus.status.display)resStatus.hide();
     }, error=>{
       Error(error);
     });

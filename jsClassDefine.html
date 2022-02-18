@@ -7,8 +7,31 @@
     constructor(){
       this.calendar = []; //[{month:{year: year, month: month}, dates: [{date: {date: dateObject, num: recordNumber}, type: dateType},...]},...] (dateType=予約対象か)
       this.calendars = [];
+      this.qm = new QuotaManager();
     }
-    genCalendar(months){
+    genCalendar(reserve){
+      let months = reserve.dates.months;
+      reserve.dates.list.forEach((date)=>{
+        date.quotaGroup = [];
+        let y = date.date.getFullYear();
+        let m = date.date.getMonth();
+        if(date.quota != null){
+          this.qm.makeQuota(date.quota, date);
+        }
+        this.qm.addDay(date);
+        date.quotaGroup.push(this.qm.seekedQuota);
+        for(let i = 0; this.qm.seekedQuota.check() && i < date.members.length; i++){
+          if(date.members[i].search(new RegExp(reserve.user.email, "i")) >= 0){
+            this.qm.seekedQuota.count();
+          }
+        }
+        m = String(m).padStart(2, "0");
+        if(undefined == months[String(y)+m]){
+          months[String(y)+m] = [];
+        }
+        months[String(y)+m].push(date);
+      });
+      console.log(reserve);
       this.calendar = [];
       Object.entries(months).forEach((month)=>{
         const y = month[1][0].date.getFullYear();
@@ -46,7 +69,6 @@
     genHTML(reserve){
       reserve.today = new Date(reserve.today);
       this.calendars = [];
-      let qm = new QuotaManager();
       this.calendar.forEach(month=>{
         const y = month.month.year;
         const m = month.month.month+ 1;
@@ -75,9 +97,6 @@
           const dt = d.getDate();
           const day = d.getDay();
           const type = date.type;
-          if(date.date.quota != null){
-            qm.makeQuota(date.date.quota, d);
-          }
           if(c++% 7 == 0){
             tr = document.createElement("tr");
             table.appendChild(tr);
@@ -87,11 +106,10 @@
           td.insertAdjacentHTML('beforeend', `<span class="date">${dt}</span>`);
           switch(type){
             case "reservable":
-              qm.addDay(d);
-              qm.domRegistration(caption);
+              //qm.domRegistration(caption);
               const capacity = date.date.capacity;
               const members = date.date.members;
-              const reserved = members.indexOf(reserve.user.email[0]) != -1;
+              const reserved = members.indexOf(reserve.user.email) != -1;
               const reservation = members.length;
               const button = document.createElement("canvas");
               button.className = "status";
@@ -120,7 +138,7 @@
               switch(true){
                 case reserved:
                   td.className = "reserved";
-                  qm.count();
+                  //qm.count();
                   opeButton.innerText = "取消";
                   opeButton.addEventListener("click", async (e)=>{
                     opeButton.remove();
@@ -186,7 +204,7 @@
         monthTable.appendChild(table);
         this.calendars.push({id: `month-${String(y)+(m)}`, m: m, y: y, HTML: monthTable});
       });
-      qm.display();
+      //qm.display();
     }
     genLinks(){
       let links = "";
@@ -203,6 +221,9 @@
       this.domList = [];
       this.q = q;
       this.dates = [start]
+    }
+    check(){
+      return 1 >= this.counter / this.q;
     }
     count(){
       this.counter++;
@@ -229,7 +250,7 @@
       this.QuotaList = [];
       this.seekedQuota = null;
     }
-    makeQuota(...[q, start]){
+    makeQuota(q, start){
       const quotaBeenMade = new Quota(q,start);
       this.QuotaList.push(quotaBeenMade);
       this.seekedQuota = quotaBeenMade;

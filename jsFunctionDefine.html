@@ -20,18 +20,7 @@
     });
   }
   function load(reserve){
-    let months = reserve.dates.months;
-    reserve.dates.list.forEach((date)=>{
-      let y = date.date.getFullYear();
-      let m = date.date.getMonth();
-      m = String(m).padStart(2, "0");
-      if(undefined == months[String(y)+m]){
-        months[String(y)+m] = [];
-      }
-      months[String(y)+m].push(date);
-    });
-    console.log(reserve);
-    calendarObj.genCalendar(reserve.dates.months);
+    calendarObj.genCalendar(reserve);
     calendarObj.genHTML(reserve);
     console.log(calendarObj);
     links.innerHTML = calendarObj.genLinks();

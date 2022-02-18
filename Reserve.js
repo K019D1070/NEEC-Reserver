@@ -62,7 +62,7 @@ class Reserve{
     reserve.accountCheck();
     return {
       user: {
-        email: this.convert([this.user.email])
+        email: this.convert(this.user.email)[0]
       },
       dates: this.dates,
       config: {
